@@ -47,9 +47,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 .lv button{flex:1;padding:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:14px}
 .lv button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .wrap{position:relative}
-#grid{display:grid;grid-template-columns:repeat(9,1fr);border:2px solid var(--thick);border-radius:6px;overflow:hidden;background:var(--card);aspect-ratio:1}
+#grid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));border:2px solid var(--thick);border-radius:6px;overflow:hidden;background:var(--card);aspect-ratio:1}
 #lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.c{position:relative;display:flex;align-items:center;justify-content:center;border:.5px solid var(--line);font-size:clamp(18px,6vw,28px);user-select:none;cursor:pointer}
+.c{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;border:.5px solid var(--line);font-size:clamp(18px,6vw,28px);user-select:none;cursor:pointer}
 .c:nth-child(9n+3),.c:nth-child(9n+6){border-right:2px solid var(--thick)}
 .c:nth-child(n+19):nth-child(-n+27),.c:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--thick)}
 .c.peer{background:var(--peer)}.c.same{background:var(--same)}.c.sel{background:var(--sel)}
@@ -59,7 +59,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 .c.tgt{background:var(--card);box-shadow:inset 0 0 0 2px var(--accent)}
 .c.src{background:#34c759;color:#fff}
 .c.dm{opacity:.4}
-.n{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;font-size:clamp(7px,2.3vw,11px);color:var(--mute);text-align:center;align-items:center}
+.n{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;font-size:clamp(7px,2.3vw,11px);color:var(--mute);text-align:center;align-items:center}
 .tools{display:flex;gap:6px;margin:12px 0 8px}
 .tools button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:13px}
 .tools button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
