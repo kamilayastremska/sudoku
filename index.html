@@ -14,6 +14,22 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .top h1{font-size:20px;margin:0}
 .gear{background:none;border:0;font-size:24px;color:var(--ink);padding:4px 8px}
+.home{text-align:center}
+.home::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(70% 45% at 50% 0%,rgba(79,125,255,.25),transparent 70%)}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:136px;margin:5vh auto 22px;padding:10px;background:var(--card);border-radius:30px;box-shadow:0 14px 36px rgba(43,95,217,.28);transform:rotate(-5deg)}
+.mini i{display:flex;aspect-ratio:1;align-items:center;justify-content:center;border-radius:11px;background:var(--peer);font-style:normal;font-weight:700;font-size:22px;color:var(--accent)}
+.mini i.a{background:var(--accent);color:var(--card)}
+.home h1{font-family:Georgia,"Times New Roman",serif;font-size:46px;font-weight:700;letter-spacing:1px;margin:0 0 30px}
+#lv{display:grid;gap:10px;margin-bottom:20px}
+#lv button{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:18px;font-size:18px;text-align:left;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+#lv button small{color:var(--mute);font-size:13px}
+#lv button.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent),0 6px 18px rgba(43,95,217,.2)}
+.nm{display:flex;align-items:center;gap:12px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.dot.easy{background:#34c759}.dot.med{background:#ffb020}.dot.hard{background:#ff5a52}
+.play{width:100%;padding:17px;border:0;border-radius:18px;background:linear-gradient(135deg,#5b86ff,#2b5fd9);color:#fff;font-size:21px;font-weight:700;letter-spacing:.5px;box-shadow:0 12px 26px rgba(43,95,217,.4)}
+.play:active{transform:scale(.98)}
+.fresh{margin-top:10px;background:none;border:0;color:var(--accent);font-size:16px;padding:8px}
 .stats{display:flex;justify-content:space-around;margin-bottom:10px;text-align:center}
 .stats small{display:block;color:var(--mute);font-size:12px}
 .stats b{font-size:17px;font-variant-numeric:tabular-nums}
@@ -65,10 +81,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top"><h1>Судоку</h1><button class="gear" id="gear" aria-label="Настройки">⚙</button></div>
+<div class="app home" id="home">
+  <div class="top"><span></span><button class="gear" id="gear2" aria-label="Настройки">⚙</button></div>
+  <div class="mini"><i>5</i><i>3</i><i>8</i><i>2</i><i class="a">9</i><i>4</i><i>7</i><i>1</i><i>6</i></div><h1>Судоку</h1>
+  <div id="lv"></div>
+  <button class="play" id="play">Играть</button>
+  <button class="fresh" id="fresh">Начать заново</button>
+</div>
+<div class="app" id="game" style="display:none">
+  <div class="top"><button class="gear" id="back" aria-label="Назад">←</button><h1>Судоку</h1><button class="gear" id="gear" aria-label="Настройки">⚙</button></div>
   <div class="stats"><div><small>Очки</small><b id="sc">0</b></div><div id="stM"><small>Ошибки</small><b id="ms">0</b></div><div id="stT"><small>Время</small><b id="t">00:00</b></div></div>
-  <div class="lv" id="lv"></div>
   <div class="wrap" id="wrap"><div id="grid"></div><svg id="lines" viewBox="0 0 9 9" preserveAspectRatio="none"></svg></div>
   <div class="tools">
     <button id="bu">↶ Отмена</button>
@@ -304,7 +326,6 @@ $("grid").addEventListener("click",e=>{const c=e.target.closest(".c");if(c&&!S.h
 $("bu").onclick=undo;$("be").onclick=erase;$("bh").onclick=hint;
 $("bn").onclick=()=>{S.note=!S.note;render()};
 for(let d=1;d<=9;d++){const b=document.createElement("button");b.textContent=d;b.dataset.d=d;b.onclick=()=>put(d);$("pad").appendChild(b)}
-for(const k in LV){const b=document.createElement("button");b.textContent=LV[k][0];b.dataset.k=k;b.onclick=()=>{if(S.hl)return;if(S.lv===k){if(!S.won&&!S.lost&&S.hist.length&&!confirm("Начать эту игру заново? Прогресс на этом уровне пропадёт."))return;newGame(k);return}save();const g=D.games[k];if(g&&!g.won&&!g.lost&&g.p.length===81){S=norm(g);render()}else newGame(k)};$("lv").appendChild(b)}
 document.addEventListener("keydown",e=>{
   if(S.hl||S.lost)return;
   if(e.key>="1"&&e.key<="9")put(+e.key);
@@ -315,13 +336,29 @@ document.addEventListener("keydown",e=>{
     const n=S.sel+d;if(n>=0&&n<81&&!(d===1&&S.sel%9===8)&&!(d===-1&&S.sel%9===0)){S.sel=n;render()}
   }
 });
-setInterval(()=>{if(!S.won&&!S.lost&&!document.hidden){S.sec++;tick();if(S.sec%5===0)save()}},1000);
+setInterval(()=>{if(!S.won&&!S.lost&&!document.hidden&&$("game").style.display!=="none"){S.sec++;tick();if(S.sec%5===0)save()}},1000);
 
 function openSet(o){$("set").classList.toggle("on",o);$("bk").classList.toggle("on",o)}
 ["mist","timer","sound","vib"].forEach(k=>{const el=$("s_"+k);el.checked=ST[k];el.onchange=()=>{ST[k]=el.checked;try{localStorage.setItem("sudoku-set",JSON.stringify(ST))}catch(e){}if(k==="sound"&&ST.sound)sfx("ok");if(k==="vib"&&ST.vib)vib(40);render()}});
 $("gear").onclick=()=>openSet(true);$("bk").onclick=()=>openSet(false);$("sclose").onclick=()=>openSet(false);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)save()});
-if(load())render();else newGame("easy");
+let pick="easy";
+const info=k=>{const g=D.games[k];return g&&!g.won&&!g.lost&&g.p&&g.p.length===81&&g.hist&&g.hist.length?g:null};
+function homeRender(){
+  $("lv").innerHTML="";
+  for(const k in LV){const g=info(k);const b=document.createElement("button");b.className=k===pick?"on":"";b.innerHTML='<span class="nm"><i class="dot '+k+'"></i><b>'+LV[k][0]+'</b></span><small>'+(g?"▶ "+fmt(g.sec)+" · ошибки "+g.mist+"/3":"Новая игра")+"</small>";b.onclick=()=>{pick=k;homeRender()};$("lv").appendChild(b)}
+  const g=info(pick);
+  $("play").textContent=g?"Продолжить":"Играть";
+  $("fresh").style.display=g?"":"none";
+}
+function showHome(){S.hl=null;save();$("sheet").classList.remove("on");$("game").style.display="none";$("home").style.display="";pick=S.lv;homeRender()}
+function showGame(){$("home").style.display="none";$("game").style.display="";render()}
+$("play").onclick=()=>{const g=info(pick);if(g)S=norm(g);else newGame(pick);showGame()};
+$("fresh").onclick=()=>{if(!confirm("Начать заново? Прогресс на этом уровне пропадёт."))return;newGame(pick);showGame()};
+$("back").onclick=()=>{if(S.hl)return;showHome()};
+$("gear2").onclick=()=>openSet(true);
+if(load())pick=S.lv;else newGame("easy");
+homeRender();
 </script>
 </body>
 </html>
