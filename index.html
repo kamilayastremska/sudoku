@@ -5,41 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Судоку</title>
 <style>
-:root{--bg:#f6f4ef;--card:#fff;--ink:#23211d;--mute:#8a857b;--line:#d9d4c8;--thick:#23211d;--sel:#ffe9a8;--peer:#f1ece0;--same:#ffd27a;--given:#23211d;--user:#2b5fd9;--err:#d93a3a;--errbg:#fde2e2;--accent:#2b5fd9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#16150f;--card:#201e17;--ink:#ece8dc;--mute:#8f897b;--line:#3a372c;--thick:#ece8dc;--sel:#5a4a14;--peer:#2a271d;--same:#6b5416;--given:#ece8dc;--user:#7da2ff;--err:#ff7a7a;--errbg:#4a2020;--accent:#7da2ff}}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#16150f;--card:#201e17;--ink:#ece8dc;--mute:#8f897b;--line:#3a372c;--thick:#ece8dc;--sel:#5a4a14;--peer:#2a271d;--same:#6b5416;--given:#ece8dc;--user:#7da2ff;--err:#ff7a7a;--errbg:#4a2020;--accent:#7da2ff}
+:root{--bg:#f6f4ef;--card:#fff;--ink:#23211d;--mute:#8a857b;--line:#d9d4c8;--thick:#23211d;--sel:#ffe9a8;--peer:#f1ece0;--same:#ffd27a;--given:#23211d;--user:#2b5fd9;--err:#d93a3a;--errbg:#fde2e2;--accent:#2b5fd9;--area:#b3dcff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#16150f;--card:#201e17;--ink:#ece8dc;--mute:#8f897b;--line:#3a372c;--thick:#ece8dc;--sel:#5a4a14;--peer:#2a271d;--same:#6b5416;--given:#ece8dc;--user:#7da2ff;--err:#ff7a7a;--errbg:#4a2020;--accent:#7da2ff;--area:#27476e}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#16150f;--card:#201e17;--ink:#ece8dc;--mute:#8f897b;--line:#3a372c;--thick:#ece8dc;--sel:#5a4a14;--peer:#2a271d;--same:#6b5416;--given:#ece8dc;--user:#7da2ff;--err:#ff7a7a;--errbg:#4a2020;--accent:#7da2ff;--area:#27476e}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center}
 .app{width:100%;max-width:440px;padding:12px}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .top h1{font-size:20px;margin:0}
+.sc{font-weight:700;font-size:17px;color:var(--accent);font-variant-numeric:tabular-nums}
 .timer{font-variant-numeric:tabular-nums;color:var(--mute);font-size:16px}
 .lv{display:flex;gap:6px;margin-bottom:10px}
 .lv button{flex:1;padding:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:14px}
 .lv button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.wrap{position:relative}
 #grid{display:grid;grid-template-columns:repeat(9,1fr);border:2px solid var(--thick);border-radius:6px;overflow:hidden;background:var(--card);aspect-ratio:1}
+#lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .c{position:relative;display:flex;align-items:center;justify-content:center;border:.5px solid var(--line);font-size:clamp(18px,6vw,28px);user-select:none;cursor:pointer}
 .c:nth-child(9n+3),.c:nth-child(9n+6){border-right:2px solid var(--thick)}
 .c:nth-child(n+19):nth-child(-n+27),.c:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--thick)}
 .c.peer{background:var(--peer)}.c.same{background:var(--same)}.c.sel{background:var(--sel)}
 .c.g{color:var(--given);font-weight:600}.c.u{color:var(--user)}
 .c.bad{background:var(--errbg);color:var(--err)}
+.c.area{background:var(--area)}
+.c.tgt{background:var(--card);box-shadow:inset 0 0 0 2px var(--accent)}
+.c.src{background:#34c759;color:#fff}
+.c.dm{opacity:.4}
 .n{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;font-size:clamp(7px,2.3vw,11px);color:var(--mute);text-align:center;align-items:center}
 .tools{display:flex;gap:6px;margin:12px 0 8px}
 .tools button{flex:1;padding:10px 4px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:13px}
 .tools button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tools button:disabled{opacity:.4}
 .pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
-.pad button{padding:12px 0;border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:10px;font-size:22px;position:relative}
+.pad button{padding:12px 0;border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:10px;font-size:22px}
 .pad button.done{opacity:.25}
 .msg{text-align:center;margin-top:12px;min-height:22px;color:var(--mute);font-size:14px}
 .win{color:var(--accent);font-weight:600;font-size:16px}
+.fly{position:absolute;transform:translate(-50%,-50%);font-weight:700;font-size:14px;color:#1a9b4a;pointer-events:none;white-space:nowrap;z-index:5;animation:fl 1.1s ease-out forwards}
+@keyframes fl{from{opacity:1}to{opacity:0;transform:translate(-50%,-260%)}}
+#sheet{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:424px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px 18px 10px;box-shadow:0 10px 40px rgba(0,0,0,.35);z-index:30;display:none;text-align:center}
+#sheet.on{display:block}
+#sheet h3{margin:0 0 8px;font-size:18px}
+#sheet p{margin:0;color:var(--mute);font-size:16px;line-height:1.45;min-height:70px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;border-top:1px solid var(--line);padding-top:6px}
+.nav button{background:none;border:0;color:var(--accent);font-size:20px;font-weight:600;padding:8px 10px;min-width:70px}
+.dots{display:flex;gap:10px}.dots i{width:9px;height:9px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--accent)}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><h1>Судоку</h1><div class="timer" id="t">00:00</div></div>
+  <div class="top"><h1>Судоку</h1><div class="sc" id="sc">★ 0</div><div class="timer" id="t">00:00</div></div>
   <div class="lv" id="lv"></div>
-  <div id="grid"></div>
+  <div class="wrap" id="wrap"><div id="grid"></div><svg id="lines" viewBox="0 0 9 9" preserveAspectRatio="none"></svg></div>
   <div class="tools">
     <button id="bu">↶ Отмена</button>
     <button id="be">⌫ Стереть</button>
@@ -49,16 +66,22 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
   <div class="pad" id="pad"></div>
   <div class="msg" id="msg"></div>
 </div>
+<div id="sheet"></div>
 <script>
 const LV={easy:["Легко",41],med:["Средне",49],hard:["Сложно",54]};
-let S={lv:"easy",p:[],sol:[],v:[],nt:[],sel:-1,note:false,hist:[],sec:0,won:false};
+const BASE={easy:10,med:15,hard:20};
+let S={lv:"easy",p:[],sol:[],v:[],nt:[],sel:-1,note:false,hist:[],sec:0,won:false,hints:3,hl:null,pts:0,streak:0,got:[],ud:[]};
 const $=id=>document.getElementById(id);
+const N9=[0,1,2,3,4,5,6,7,8];
 const bi=i=>((i/27|0)*3)+((i%9)/3|0);
 const peers=(a,b)=>a!==b&&((a/9|0)===(b/9|0)||a%9===b%9||bi(a)===bi(b));
+const bit=d=>1<<(d-1);
+const rowC=r=>N9.map(c=>r*9+c),colC=c=>N9.map(r=>r*9+c),boxC=b=>N9.map(k=>((b/3|0)*3+(k/3|0))*9+(b%3)*3+k%3);
+const unitsOf=i=>[["r"+(i/9|0),rowC(i/9|0)],["c"+i%9,colC(i%9)],["b"+bi(i),boxC(bi(i))]];
 
 function search(g,limit,rand){
   const r=Array(9).fill(0),c=Array(9).fill(0),b=Array(9).fill(0);
-  for(let i=0;i<81;i++)if(g[i]){const m=1<<(g[i]-1);r[i/9|0]|=m;c[i%9]|=m;b[bi(i)]|=m}
+  for(let i=0;i<81;i++)if(g[i]){const m=bit(g[i]);r[i/9|0]|=m;c[i%9]|=m;b[bi(i)]|=m}
   let count=0,sol=null;
   (function rec(){
     let best=-1,bc=10,bm=0;
@@ -68,10 +91,10 @@ function search(g,limit,rand){
       if(n<bc){bc=n;best=i;bm=m;if(!n)return}
     }
     if(best<0){count++;if(!sol)sol=g.slice();return}
-    let ds=[];for(let d=1;d<=9;d++)if(bm&(1<<(d-1)))ds.push(d);
+    let ds=[];for(let d=1;d<=9;d++)if(bm&bit(d))ds.push(d);
     if(rand)ds.sort(()=>Math.random()-.5);
     for(const d of ds){
-      const m=1<<(d-1),R=best/9|0,C=best%9,B=bi(best);
+      const m=bit(d),R=best/9|0,C=best%9,B=bi(best);
       g[best]=d;r[R]|=m;c[C]|=m;b[B]|=m;
       rec();
       g[best]=0;r[R]&=~m;c[C]&=~m;b[B]&=~m;
@@ -94,79 +117,171 @@ function gen(lv){
 function newGame(lv){
   S.lv=lv;const g=gen(lv);
   S.p=g.p;S.sol=g.sol;S.v=g.p.slice();S.nt=Array(81).fill(0);
-  S.sel=-1;S.hist=[];S.sec=0;S.won=false;S.note=false;
+  S.sel=-1;S.hist=[];S.sec=0;S.won=false;S.note=false;S.hints=3;S.hl=null;S.pts=0;S.streak=0;S.got=Array(81).fill(0);S.ud=[];
   save();render();
 }
 function save(){try{localStorage.setItem("sudoku",JSON.stringify(S))}catch(e){}}
-function load(){try{const s=localStorage.getItem("sudoku");if(s){const o=JSON.parse(s);if(o&&o.p&&o.p.length===81){S=o;return true}}}catch(e){}return false}
+function load(){try{const s=localStorage.getItem("sudoku");if(s){const o=JSON.parse(s);if(o&&o.p&&o.p.length===81){S=o;S.hl=null;if(S.hints===undefined)S.hints=3;S.pts=S.pts||0;S.streak=S.streak||0;S.got=S.got||Array(81).fill(0);S.ud=S.ud||[];return true}}}catch(e){}return false}
 
 function conflict(i){
   const v=S.v[i];if(!v||S.p[i])return false;
   for(let j=0;j<81;j++)if(peers(i,j)&&S.v[j]===v)return true;
   return false;
 }
+function fly(i,t){
+  const e=document.createElement("div");e.className="fly";e.textContent=t;
+  e.style.left=((i%9)+.5)/9*100+"%";e.style.top=((i/9|0)+.5)/9*100+"%";
+  $("wrap").appendChild(e);setTimeout(()=>e.remove(),1100);
+}
+function scoreCell(i,d){
+  if(d!==S.sol[i]){S.streak=0;return}
+  if(S.got[i])return;
+  S.got[i]=1;
+  let p=BASE[S.lv]+Math.min(S.streak,5)*2;S.streak++;
+  let t="+"+p+(S.streak>1?" ×"+S.streak:"");
+  for(const[k,cells]of unitsOf(i))if(!S.ud.includes(k)&&cells.every(j=>S.v[j]===S.sol[j])){S.ud.push(k);p+=30;t+=" +30 ✓"}
+  S.pts+=p;fly(i,t);
+}
 function snap(){S.hist.push([S.v.slice(),S.nt.slice()]);if(S.hist.length>200)S.hist.shift()}
 function put(d){
-  const i=S.sel;if(i<0||S.p[i]||S.won)return;
+  const i=S.sel;if(i<0||S.p[i]||S.won||S.hl)return;
   snap();
   if(S.note){
     if(S.v[i])return;
-    S.nt[i]^=1<<(d-1);
+    S.nt[i]^=bit(d);
   }else{
     if(S.v[i]===d){S.v[i]=0}else{
-      S.v[i]=d;S.nt[i]=0;
-      for(let j=0;j<81;j++)if(peers(i,j))S.nt[j]&=~(1<<(d-1));
+      S.v[i]=d;S.nt[i]=0;scoreCell(i,d);
+      for(let j=0;j<81;j++)if(peers(i,j))S.nt[j]&=~bit(d);
     }
   }
   check();save();render();
 }
-function erase(){const i=S.sel;if(i<0||S.p[i]||S.won)return;snap();S.v[i]=0;S.nt[i]=0;save();render()}
-function undo(){if(S.won)return;const h=S.hist.pop();if(h){S.v=h[0];S.nt=h[1];save();render()}}
-function hint(){
-  if(S.won)return;
-  let i=S.sel;
-  if(i<0||S.p[i]||S.v[i]===S.sol[i]){
-    const w=[];for(let j=0;j<81;j++)if(S.v[j]!==S.sol[j])w.push(j);
-    if(!w.length)return;i=w[Math.random()*w.length|0];
-  }
-  snap();S.sel=i;S.v[i]=S.sol[i];S.nt[i]=0;
-  for(let j=0;j<81;j++)if(peers(i,j))S.nt[j]&=~(1<<(S.sol[i]-1));
-  check();save();render();
+function erase(){const i=S.sel;if(i<0||S.p[i]||S.won||S.hl)return;snap();S.v[i]=0;S.nt[i]=0;save();render()}
+function undo(){if(S.won||S.hl)return;const h=S.hist.pop();if(h){S.v=h[0];S.nt=h[1];save();render()}}
+function check(){const w=S.v.every((x,i)=>x===S.sol[i]);if(w&&!S.won)S.pts+=100;S.won=w}
+
+const HS=[...N9.map(k=>["b",k]),...N9.map(k=>["r",k]),...N9.map(k=>["c",k])];
+const cand=i=>{let m=511;for(let j=0;j<81;j++)if(peers(i,j)&&S.v[j])m&=~bit(S.v[j]);return m};
+function findStep(i0){
+  const E=[];for(let i=0;i<81;i++)if(!S.v[i])E.push(i);
+  const cs={};E.forEach(i=>cs[i]=cand(i));
+  const naked=i=>{
+    const m=cs[i];if(!m||(m&(m-1)))return null;
+    const d=Math.log2(m)+1,g=[];
+    for(let e=1;e<=9;e++){if(e===d)continue;const k=S.v.findIndex((x,q)=>x===e&&peers(q,i));if(k>=0)g.push(k)}
+    const r=i/9|0,c=i%9;
+    return{i,d,title:"Единственный вариант",g,b:[...rowC(r),...colC(c),...boxC(bi(i))],box:{x:c,y:r,w:1,h:1},t2:"В эту клетку не могут попасть цифры, которые уже есть в её строке, столбце и блоке. Остаётся только "+d};
+  };
+  const hid=i=>{
+    for(const[kind,idx]of HS){
+      const cells=kind==="b"?boxC(idx):kind==="r"?rowC(idx):colC(idx);
+      if(!cells.includes(i))continue;
+      for(let d=1;d<=9;d++){
+        if(!(cs[i]&bit(d))||cells.some(j=>S.v[j]===d))continue;
+        if(cells.filter(j=>!S.v[j]&&(cs[j]&bit(d))).length!==1)continue;
+        const g=[],b=[];
+        for(const j of cells){
+          if(j===i||S.v[j])continue;
+          const k=S.v.findIndex((x,q)=>x===d&&peers(q,j));if(k<0)continue;
+          if(!g.includes(k))g.push(k);
+          b.push(...((j/9|0)===(k/9|0)?rowC(j/9|0):j%9===k%9?colC(j%9):boxC(bi(j))));
+        }
+        const bx=kind==="b"?{x:(idx%3)*3,y:(idx/3|0)*3,w:3,h:3}:kind==="r"?{x:0,y:idx,w:9,h:1}:{x:idx,y:0,w:1,h:9};
+        const nm=kind==="b"?"этом блоке":kind==="r"?"этой строке":"этом столбце";
+        return{i,d,title:"Последняя свободная клетка",g,b,box:bx,t2:"В "+nm+" только одна клетка, где может стоять "+d};
+      }
+    }
+    return null;
+  };
+  if(i0>=0&&!S.v[i0])return naked(i0)||hid(i0);
+  for(const i of E){const r=naked(i);if(r)return r}
+  for(const i of E){const r=hid(i);if(r)return r}
+  return null;
 }
-function check(){S.won=S.v.every((x,i)=>x===S.sol[i])}
+function hint(){
+  if(S.won||S.hints<=0||S.hl)return;
+  const w=[];for(let j=0;j<81;j++)if(S.v[j]&&S.v[j]!==S.sol[j])w.push(j);
+  if(w.length){
+    S.hints--;S.sel=w[0];
+    S.hl={i:w[0],step:0,title:"Ошибка",steps:[{txt:"Здесь ошибка: цифра "+S.v[w[0]]+" не подходит. Сотри её или замени, и подсказки снова будут точными.",show:true,g:[],b:[],box:{x:w[0]%9,y:w[0]/9|0,w:1,h:1}}]};
+    save();render();return;
+  }
+  const E=[];for(let j=0;j<81;j++)if(!S.v[j])E.push(j);
+  if(!E.length)return;
+  let st=null;
+  if(S.sel>=0&&!S.v[S.sel])st=findStep(S.sel);
+  if(!st)st=findStep(-1);
+  let steps;
+  if(!st){
+    const i=(S.sel>=0&&!S.v[S.sel])?S.sel:E[Math.random()*E.length|0];
+    st={i,d:S.sol[i]};
+    steps=[{txt:"Простых логических ходов не осталось. Здесь по решению стоит "+st.d+": нужны более сложные приёмы.",show:true,g:[],b:[],box:null}];
+    st.title="Подсказка";
+  }else{
+    steps=[
+      {txt:"Обрати внимание на эти клетки и подсвеченные области",show:false,g:st.g,b:st.b,box:null},
+      {txt:st.t2,show:false,g:st.g,b:st.b,box:st.box},
+      {txt:"Так как это единственный вариант, в этой клетке должна стоять "+st.d,show:true,g:st.g,b:st.b,box:null}
+    ];
+  }
+  snap();S.hints--;S.sel=st.i;S.v[st.i]=st.d;S.nt[st.i]=0;S.got[st.i]=1;
+  for(let j=0;j<81;j++)if(peers(st.i,j))S.nt[j]&=~bit(st.d);
+  for(const[k,cells]of unitsOf(st.i))if(!S.ud.includes(k)&&cells.every(j=>S.v[j]===S.sol[j]))S.ud.push(k);
+  S.hl={i:st.i,step:0,title:st.title,steps};
+  save();render();
+}
+function closeHint(){S.hl=null;check();save();render()}
 
 function render(){
-  const g=$("grid");let h="";
-  const sv=S.sel>=0?S.v[S.sel]:0;
+  const hl=S.hl,stp=hl?hl.steps[hl.step]:null;
+  const sv=!hl&&S.sel>=0?S.v[S.sel]:0;
+  let h="";
   for(let i=0;i<81;i++){
     let cl="c";
     if(S.p[i])cl+=" g";else if(S.v[i])cl+=" u";
-    if(i===S.sel)cl+=" sel";
-    else if(sv&&S.v[i]===sv)cl+=" same";
-    else if(S.sel>=0&&peers(S.sel,i))cl+=" peer";
-    if(conflict(i))cl+=" bad";
+    if(hl){
+      if(stp.g.includes(i))cl+=" src";else if(i===hl.i)cl+=" tgt";else if(stp.b.includes(i))cl+=" area";else cl+=" dm";
+    }else{
+      if(i===S.sel)cl+=" sel";else if(sv&&S.v[i]===sv)cl+=" same";else if(S.sel>=0&&peers(S.sel,i))cl+=" peer";
+      if(conflict(i))cl+=" bad";
+    }
     let inner="";
-    if(S.v[i])inner=S.v[i];
-    else if(S.nt[i]){inner='<div class="n">';for(let d=1;d<=9;d++)inner+="<span>"+(S.nt[i]&(1<<(d-1))?d:"")+"</span>";inner+="</div>"}
+    if(S.v[i]){if(!(hl&&i===hl.i&&!stp.show))inner=S.v[i]}
+    else if(S.nt[i]){inner='<div class="n">';for(let d=1;d<=9;d++)inner+="<span>"+(S.nt[i]&bit(d)?d:"")+"</span>";inner+="</div>"}
     h+='<div class="'+cl+'" data-i="'+i+'">'+inner+"</div>";
   }
-  g.innerHTML=h;
+  $("grid").innerHTML=h;
+  let L="";
+  if(hl&&stp.box){const b=stp.box;L='<rect x="'+(b.x+.05)+'" y="'+(b.y+.05)+'" width="'+(b.w-.1)+'" height="'+(b.h-.1)+'" rx=".22" style="fill:none;stroke:#0a5cff;stroke-width:.1"/>'}
+  $("lines").innerHTML=L;
+  const sh=$("sheet");
+  if(hl){
+    const n=hl.steps.length;let dots="";for(let k=0;k<n;k++)dots+='<i class="'+(k===hl.step?"on":"")+'"></i>';
+    sh.innerHTML='<h3>'+hl.title+'</h3><p>'+stp.txt+'</p><div class="nav"><button id="pv" style="visibility:'+(hl.step?"visible":"hidden")+'">‹</button><div class="dots">'+dots+'</div><button id="nx">'+(hl.step<n-1?"›":"Готово")+'</button></div>';
+    sh.classList.add("on");
+    $("pv").onclick=()=>{S.hl.step--;render()};
+    $("nx").onclick=()=>{if(S.hl.step<n-1){S.hl.step++;render()}else closeHint()};
+  }else sh.classList.remove("on");
   const cnt=Array(10).fill(0);S.v.forEach(x=>cnt[x]++);
   document.querySelectorAll("#pad button").forEach(b=>b.classList.toggle("done",cnt[+b.dataset.d]>=9));
   $("bn").classList.toggle("on",S.note);
   document.querySelectorAll("#lv button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.lv));
-  $("msg").innerHTML=S.won?'<span class="win">Готово! Ты решила за '+fmt(S.sec)+' 🎉</span>':"";
+  $("bh").textContent="💡 Подсказка ("+S.hints+")";$("bh").disabled=S.hints<=0||S.won||!!S.hl;
+  $("sc").textContent="★ "+S.pts;
+  $("msg").innerHTML=S.won?'<span class="win">Готово! '+fmt(S.sec)+' · очки: '+S.pts+' 🎉</span>':"";
   tick();
 }
 const fmt=s=>String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 function tick(){$("t").textContent=fmt(S.sec)}
 
-$("grid").addEventListener("click",e=>{const c=e.target.closest(".c");if(c){S.sel=+c.dataset.i;render()}});
+$("grid").addEventListener("click",e=>{const c=e.target.closest(".c");if(c&&!S.hl){S.sel=+c.dataset.i;render()}});
 $("bu").onclick=undo;$("be").onclick=erase;$("bh").onclick=hint;
 $("bn").onclick=()=>{S.note=!S.note;render()};
 for(let d=1;d<=9;d++){const b=document.createElement("button");b.textContent=d;b.dataset.d=d;b.onclick=()=>put(d);$("pad").appendChild(b)}
 for(const k in LV){const b=document.createElement("button");b.textContent=LV[k][0];b.dataset.k=k;b.onclick=()=>{if(S.lv===k&&!S.won&&S.hist.length&&!confirm("Начать новую игру?"))return;newGame(k)};$("lv").appendChild(b)}
 document.addEventListener("keydown",e=>{
+  if(S.hl)return;
   if(e.key>="1"&&e.key<="9")put(+e.key);
   else if(e.key==="Backspace"||e.key==="Delete")erase();
   else if(e.key==="n")S.note=!S.note,render();
@@ -181,3 +296,4 @@ if(load())render();else newGame("easy");
 </script>
 </body>
 </html>
+
