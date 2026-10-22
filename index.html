@@ -342,8 +342,9 @@ function openSet(o){$("set").classList.toggle("on",o);$("bk").classList.toggle("
 ["mist","timer","sound","vib"].forEach(k=>{const el=$("s_"+k);el.checked=ST[k];el.onchange=()=>{ST[k]=el.checked;try{localStorage.setItem("sudoku-set",JSON.stringify(ST))}catch(e){}if(k==="sound"&&ST.sound)sfx("ok");if(k==="vib"&&ST.vib)vib(40);render()}});
 $("gear").onclick=()=>openSet(true);$("bk").onclick=()=>openSet(false);$("sclose").onclick=()=>openSet(false);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)save()});
+window.addEventListener("pagehide",save);
 let pick="easy";
-const info=k=>{const g=D.games[k];return g&&!g.won&&!g.lost&&g.p&&g.p.length===81&&g.hist&&g.hist.length?g:null};
+const info=k=>{const g=D.games[k];return g&&!g.won&&!g.lost&&g.p&&g.p.length===81&&(g.hist&&g.hist.length||g.sec>=10)?g:null};
 function homeRender(){
   $("lv").innerHTML="";
   for(const k in LV){const g=info(k);const b=document.createElement("button");b.className=k===pick?"on":"";b.innerHTML='<span class="nm"><i class="dot '+k+'"></i><b>'+LV[k][0]+'</b></span><small>'+(g?"▶ "+fmt(g.sec)+" · ошибки "+g.mist+"/3":"Новая игра")+"</small>";b.onclick=()=>{pick=k;homeRender()};$("lv").appendChild(b)}
@@ -351,14 +352,15 @@ function homeRender(){
   $("play").textContent=g?"Продолжить":"Играть";
   $("fresh").style.display=g?"":"none";
 }
-function showHome(){S.hl=null;save();$("sheet").classList.remove("on");$("game").style.display="none";$("home").style.display="";pick=S.lv;homeRender()}
-function showGame(){$("home").style.display="none";$("game").style.display="";render()}
+function showHome(){S.hl=null;D.screen="home";save();$("sheet").classList.remove("on");$("game").style.display="none";$("home").style.display="";pick=S.lv;homeRender()}
+function showGame(){D.screen="game";save();$("home").style.display="none";$("game").style.display="";render()}
 $("play").onclick=()=>{const g=info(pick);if(g)S=norm(g);else newGame(pick);showGame()};
 $("fresh").onclick=()=>{if(!confirm("Начать заново? Прогресс на этом уровне пропадёт."))return;newGame(pick);showGame()};
 $("back").onclick=()=>{if(S.hl)return;showHome()};
 $("gear2").onclick=()=>openSet(true);
 if(load())pick=S.lv;else newGame("easy");
 homeRender();
+if(D.screen==="game"&&!S.won&&!S.lost&&S.p.length===81)showGame();
 </script>
 </body>
 </html>
