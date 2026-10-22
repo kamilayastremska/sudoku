@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -111,8 +112,9 @@ const LV={easy:["Легко",41],med:["Средне",49],hard:["Сложно",54
 const BASE={easy:10,med:15,hard:20};
 let S={lv:"easy",p:[],sol:[],v:[],nt:[],sel:-1,note:false,hist:[],sec:0,won:false,hints:3,hl:null,pts:0,streak:0,got:[],ud:[],mist:0};
 let D={games:{}};
-let ST={mist:true,timer:true,sound:true,vib:true,hlight:true};
+let ST={mist:true,timer:true,sound:true,vib:true,hlight:false};
 try{Object.assign(ST,JSON.parse(localStorage.getItem("sudoku-set")||"{}"))}catch(e){}
+if(!ST.v2){ST.hlight=false;ST.v2=1}
 let AC=null;
 function tone(f,t,d,ty){const o=AC.createOscillator(),g=AC.createGain();o.type=ty||"sine";o.frequency.value=f;g.gain.setValueAtTime(.15,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+d);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d)}
 function sfx(k){if(!ST.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();if(k==="ok")tone(660,0,.12);else if(k==="bad")tone(170,0,.25,"sawtooth");else if(k==="unit"){tone(660,0,.1);tone(880,.1,.15)}else if(k==="lose"){tone(300,0,.2,"sawtooth");tone(180,.2,.4,"sawtooth")}else if(k==="win")[523,659,784,1046].forEach((f,j)=>tone(f,j*.12,.25))}catch(e){}}
