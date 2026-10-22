@@ -13,8 +13,20 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 .app{width:100%;max-width:440px;padding:12px}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .top h1{font-size:20px;margin:0}
-.sc{font-weight:700;font-size:17px;color:var(--accent);font-variant-numeric:tabular-nums}
-.timer{font-variant-numeric:tabular-nums;color:var(--mute);font-size:16px}
+.gear{background:none;border:0;font-size:24px;color:var(--ink);padding:4px 8px}
+.stats{display:flex;justify-content:space-around;margin-bottom:10px;text-align:center}
+.stats small{display:block;color:var(--mute);font-size:12px}
+.stats b{font-size:17px;font-variant-numeric:tabular-nums}
+#bk{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:25;display:none}
+#set{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));max-width:424px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35);z-index:30;display:none}
+#set.on,#bk.on{display:block}
+#set h3{margin:0 0 6px;font-size:18px;text-align:center}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:16px}
+.row input{appearance:none;-webkit-appearance:none;width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;margin:0;transition:.2s}
+.row input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.row input:checked{background:var(--accent)}
+.row input:checked::after{left:23px}
+#set .close{display:block;margin:12px auto 0;background:none;border:0;color:var(--accent);font-size:18px;font-weight:600;padding:6px 20px}
 .lv{display:flex;gap:6px;margin-bottom:10px}
 .lv button{flex:1;padding:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:14px}
 .lv button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -54,7 +66,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
 </head>
 <body>
 <div class="app">
-  <div class="top"><h1>Судоку</h1><div class="sc" id="sc">★ 0</div><div class="timer" id="t">00:00</div></div>
+  <div class="top"><h1>Судоку</h1><button class="gear" id="gear" aria-label="Настройки">⚙</button></div>
+  <div class="stats"><div><small>Очки</small><b id="sc">0</b></div><div id="stM"><small>Ошибки</small><b id="ms">0</b></div><div id="stT"><small>Время</small><b id="t">00:00</b></div></div>
   <div class="lv" id="lv"></div>
   <div class="wrap" id="wrap"><div id="grid"></div><svg id="lines" viewBox="0 0 9 9" preserveAspectRatio="none"></svg></div>
   <div class="tools">
@@ -67,10 +80,19 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"S
   <div class="msg" id="msg"></div>
 </div>
 <div id="sheet"></div>
+<div id="bk"></div>
+<div id="set"><h3>Настройки</h3><label class="row"><span>Количество ошибок</span><input type="checkbox" id="s_mist"></label><label class="row"><span>Таймер</span><input type="checkbox" id="s_timer"></label><label class="row"><span>Звук</span><input type="checkbox" id="s_sound"></label><label class="row"><span>Вибрация</span><input type="checkbox" id="s_vib"></label><button class="close" id="sclose">Готово</button></div>
 <script>
 const LV={easy:["Легко",41],med:["Средне",49],hard:["Сложно",54]};
 const BASE={easy:10,med:15,hard:20};
-let S={lv:"easy",p:[],sol:[],v:[],nt:[],sel:-1,note:false,hist:[],sec:0,won:false,hints:3,hl:null,pts:0,streak:0,got:[],ud:[]};
+let S={lv:"easy",p:[],sol:[],v:[],nt:[],sel:-1,note:false,hist:[],sec:0,won:false,hints:3,hl:null,pts:0,streak:0,got:[],ud:[],mist:0};
+let D={games:{}};
+let ST={mist:true,timer:true,sound:true,vib:true};
+try{Object.assign(ST,JSON.parse(localStorage.getItem("sudoku-set")||"{}"))}catch(e){}
+let AC=null;
+function tone(f,t,d,ty){const o=AC.createOscillator(),g=AC.createGain();o.type=ty||"sine";o.frequency.value=f;g.gain.setValueAtTime(.15,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+d);o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+d)}
+function sfx(k){if(!ST.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();if(k==="ok")tone(660,0,.12);else if(k==="bad")tone(170,0,.25,"sawtooth");else if(k==="unit"){tone(660,0,.1);tone(880,.1,.15)}else if(k==="lose"){tone(300,0,.2,"sawtooth");tone(180,.2,.4,"sawtooth")}else if(k==="win")[523,659,784,1046].forEach((f,j)=>tone(f,j*.12,.25))}catch(e){}}
+function vib(p){if(ST.vib&&navigator.vibrate)try{navigator.vibrate(p)}catch(e){}}
 const $=id=>document.getElementById(id);
 const N9=[0,1,2,3,4,5,6,7,8];
 const bi=i=>((i/27|0)*3)+((i%9)/3|0);
@@ -115,13 +137,13 @@ function gen(lv){
   return{p,sol};
 }
 function newGame(lv){
-  S.lv=lv;const g=gen(lv);
-  S.p=g.p;S.sol=g.sol;S.v=g.p.slice();S.nt=Array(81).fill(0);
-  S.sel=-1;S.hist=[];S.sec=0;S.won=false;S.note=false;S.hints=3;S.hl=null;S.pts=0;S.streak=0;S.got=Array(81).fill(0);S.ud=[];
+  const g=gen(lv);
+  S={lv,p:g.p,sol:g.sol,v:g.p.slice(),nt:Array(81).fill(0),sel:-1,note:false,hist:[],sec:0,won:false,hints:3,hl:null,pts:0,streak:0,got:Array(81).fill(0),ud:[],mist:0};
   save();render();
 }
-function save(){try{localStorage.setItem("sudoku",JSON.stringify(S))}catch(e){}}
-function load(){try{const s=localStorage.getItem("sudoku");if(s){const o=JSON.parse(s);if(o&&o.p&&o.p.length===81){S=o;S.hl=null;if(S.hints===undefined)S.hints=3;S.pts=S.pts||0;S.streak=S.streak||0;S.got=S.got||Array(81).fill(0);S.ud=S.ud||[];return true}}}catch(e){}return false}
+function norm(g){g.hl=null;if(g.hints===undefined)g.hints=3;g.pts=g.pts||0;g.streak=g.streak||0;g.mist=g.mist||0;g.got=g.got||Array(81).fill(0);g.ud=g.ud||[];g.hist=g.hist||[];if(!g.won&&!g.lost&&g.mist>2)g.mist=2;return g}
+function save(){try{D.games[S.lv]=S;D.lv=S.lv;localStorage.setItem("sudoku2",JSON.stringify(D))}catch(e){}}
+function load(){try{const s=localStorage.getItem("sudoku2");if(s){const o=JSON.parse(s);if(o&&o.games&&o.games[o.lv]&&o.games[o.lv].p.length===81){D=o;S=norm(D.games[D.lv]);return true}}}catch(e){}return false}
 
 function conflict(i){
   const v=S.v[i];if(!v||S.p[i])return false;
@@ -134,17 +156,17 @@ function fly(i,t){
   $("wrap").appendChild(e);setTimeout(()=>e.remove(),1100);
 }
 function scoreCell(i,d){
-  if(d!==S.sol[i]){S.streak=0;return}
-  if(S.got[i])return;
+  if(d!==S.sol[i]){S.streak=0;S.mist++;if(S.mist>=3){S.lost=true;sfx("lose");vib([100,60,100])}else{sfx("bad");vib(70)}return}
+  if(S.got[i]){sfx("ok");return}
   S.got[i]=1;
   let p=BASE[S.lv]+Math.min(S.streak,5)*2;S.streak++;
   let t="+"+p+(S.streak>1?" ×"+S.streak:"");
   for(const[k,cells]of unitsOf(i))if(!S.ud.includes(k)&&cells.every(j=>S.v[j]===S.sol[j])){S.ud.push(k);p+=30;t+=" +30 ✓"}
-  S.pts+=p;fly(i,t);
+  S.pts+=p;fly(i,t);vib(15);sfx(t.includes("✓")?"unit":"ok");
 }
-function snap(){S.hist.push([S.v.slice(),S.nt.slice()]);if(S.hist.length>200)S.hist.shift()}
+function snap(){S.hist.push([S.v.slice(),S.nt.slice()]);if(S.hist.length>60)S.hist.shift()}
 function put(d){
-  const i=S.sel;if(i<0||S.p[i]||S.won||S.hl)return;
+  const i=S.sel;if(i<0||S.p[i]||S.won||S.hl||S.lost)return;
   snap();
   if(S.note){
     if(S.v[i])return;
@@ -157,9 +179,9 @@ function put(d){
   }
   check();save();render();
 }
-function erase(){const i=S.sel;if(i<0||S.p[i]||S.won||S.hl)return;snap();S.v[i]=0;S.nt[i]=0;save();render()}
-function undo(){if(S.won||S.hl)return;const h=S.hist.pop();if(h){S.v=h[0];S.nt=h[1];save();render()}}
-function check(){const w=S.v.every((x,i)=>x===S.sol[i]);if(w&&!S.won)S.pts+=100;S.won=w}
+function erase(){const i=S.sel;if(i<0||S.p[i]||S.won||S.hl||S.lost)return;snap();S.v[i]=0;S.nt[i]=0;save();render()}
+function undo(){if(S.won||S.hl||S.lost)return;const h=S.hist.pop();if(h){S.v=h[0];S.nt=h[1];save();render()}}
+function check(){const w=S.v.every((x,i)=>x===S.sol[i]);if(w&&!S.won){S.pts+=100;sfx("win");vib([40,60,40])}S.won=w}
 
 const HS=[...N9.map(k=>["b",k]),...N9.map(k=>["r",k]),...N9.map(k=>["c",k])];
 const cand=i=>{let m=511;for(let j=0;j<81;j++)if(peers(i,j)&&S.v[j])m&=~bit(S.v[j]);return m};
@@ -200,7 +222,7 @@ function findStep(i0){
   return null;
 }
 function hint(){
-  if(S.won||S.hints<=0||S.hl)return;
+  if(S.won||S.lost||S.hints<=0||S.hl)return;
   const w=[];for(let j=0;j<81;j++)if(S.v[j]&&S.v[j]!==S.sol[j])w.push(j);
   if(w.length){
     S.hints--;S.sel=w[0];
@@ -262,14 +284,17 @@ function render(){
     sh.classList.add("on");
     $("pv").onclick=()=>{S.hl.step--;render()};
     $("nx").onclick=()=>{if(S.hl.step<n-1){S.hl.step++;render()}else closeHint()};
+  }else if(S.lost){
+    sh.innerHTML='<h3>Игра окончена</h3><p>Три ошибки. Не расстраивайся, попробуй ещё раз!</p><div class="nav" style="justify-content:center"><button id="nx">Новая игра</button></div>';
+    sh.classList.add("on");$("nx").onclick=()=>newGame(S.lv);
   }else sh.classList.remove("on");
   const cnt=Array(10).fill(0);S.v.forEach(x=>cnt[x]++);
   document.querySelectorAll("#pad button").forEach(b=>b.classList.toggle("done",cnt[+b.dataset.d]>=9));
   $("bn").classList.toggle("on",S.note);
   document.querySelectorAll("#lv button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.lv));
-  $("bh").textContent="💡 Подсказка ("+S.hints+")";$("bh").disabled=S.hints<=0||S.won||!!S.hl;
-  $("sc").textContent="★ "+S.pts;
-  $("msg").innerHTML=S.won?'<span class="win">Готово! '+fmt(S.sec)+' · очки: '+S.pts+' 🎉</span>':"";
+  $("bh").textContent="💡 Подсказка ("+S.hints+")";$("bh").disabled=S.hints<=0||S.won||S.lost||!!S.hl;
+  $("sc").textContent=S.pts;$("ms").textContent=S.mist+"/3";$("stM").style.display=ST.mist?"":"none";$("stT").style.display=ST.timer?"":"none";
+  $("msg").innerHTML=S.won?'<span class="win">Готово! '+fmt(S.sec)+' · очки: '+S.pts+' · ошибки: '+S.mist+' 🎉</span>':"";
   tick();
 }
 const fmt=s=>String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
@@ -279,9 +304,9 @@ $("grid").addEventListener("click",e=>{const c=e.target.closest(".c");if(c&&!S.h
 $("bu").onclick=undo;$("be").onclick=erase;$("bh").onclick=hint;
 $("bn").onclick=()=>{S.note=!S.note;render()};
 for(let d=1;d<=9;d++){const b=document.createElement("button");b.textContent=d;b.dataset.d=d;b.onclick=()=>put(d);$("pad").appendChild(b)}
-for(const k in LV){const b=document.createElement("button");b.textContent=LV[k][0];b.dataset.k=k;b.onclick=()=>{if(S.lv===k&&!S.won&&S.hist.length&&!confirm("Начать новую игру?"))return;newGame(k)};$("lv").appendChild(b)}
+for(const k in LV){const b=document.createElement("button");b.textContent=LV[k][0];b.dataset.k=k;b.onclick=()=>{if(S.hl)return;if(S.lv===k){if(!S.won&&!S.lost&&S.hist.length&&!confirm("Начать эту игру заново? Прогресс на этом уровне пропадёт."))return;newGame(k);return}save();const g=D.games[k];if(g&&!g.won&&!g.lost&&g.p.length===81){S=norm(g);render()}else newGame(k)};$("lv").appendChild(b)}
 document.addEventListener("keydown",e=>{
-  if(S.hl)return;
+  if(S.hl||S.lost)return;
   if(e.key>="1"&&e.key<="9")put(+e.key);
   else if(e.key==="Backspace"||e.key==="Delete")erase();
   else if(e.key==="n")S.note=!S.note,render();
@@ -290,10 +315,13 @@ document.addEventListener("keydown",e=>{
     const n=S.sel+d;if(n>=0&&n<81&&!(d===1&&S.sel%9===8)&&!(d===-1&&S.sel%9===0)){S.sel=n;render()}
   }
 });
-setInterval(()=>{if(!S.won&&!document.hidden){S.sec++;tick();if(S.sec%5===0)save()}},1000);
+setInterval(()=>{if(!S.won&&!S.lost&&!document.hidden){S.sec++;tick();if(S.sec%5===0)save()}},1000);
 
+function openSet(o){$("set").classList.toggle("on",o);$("bk").classList.toggle("on",o)}
+["mist","timer","sound","vib"].forEach(k=>{const el=$("s_"+k);el.checked=ST[k];el.onchange=()=>{ST[k]=el.checked;try{localStorage.setItem("sudoku-set",JSON.stringify(ST))}catch(e){}if(k==="sound"&&ST.sound)sfx("ok");if(k==="vib"&&ST.vib)vib(40);render()}});
+$("gear").onclick=()=>openSet(true);$("bk").onclick=()=>openSet(false);$("sclose").onclick=()=>openSet(false);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)save()});
 if(load())render();else newGame("easy");
 </script>
 </body>
 </html>
-
